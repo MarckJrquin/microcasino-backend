@@ -33,7 +33,6 @@ db.address = require("./address.model.js")(sequelize, Sequelize);
 db.bank = require("./bank.model.js")(sequelize, Sequelize);
 db.bankAccount = require("./bankAccount.model.js")(sequelize, Sequelize);
 db.bankAccountType = require("./bankAccountType.model.js")(sequelize, Sequelize);
-db.paymentCard = require("./paymentCard.model.js")(sequelize, Sequelize);
 
 
 /* -- Establece una relación de muchos a muchos entre los roles y los usuarios -- */
@@ -62,17 +61,6 @@ db.user.hasMany(db.address, {
     onDelete: 'CASCADE'
 });
 db.address.belongsTo(db.user, {
-    foreignKey: 'userID',
-    onDelete: 'CASCADE'
-});
-  
-
-/* -- Establece la relación uno a muchos entre usuario y tarjetas -- */
-db.user.hasMany(db.paymentCard, {
-    foreignKey: 'userID',
-    onDelete: 'CASCADE'
-});
-db.paymentCard.belongsTo(db.user, {
     foreignKey: 'userID',
     onDelete: 'CASCADE'
 });

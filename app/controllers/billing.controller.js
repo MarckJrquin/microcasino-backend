@@ -6,7 +6,6 @@ const Person = db.person;
 const Bank = db.bank;
 const BankAccount = db.bankAccount;
 const BankAccountType = db.bankAccountType;
-const PaymentCard = db.paymentCard;
 
 
 /* -- Controlador para obtener el listado de bancos -- */
@@ -25,33 +24,6 @@ const getBankAccountTypes = async (req, res) => {
     try {
         const bankAccountTypes = await BankAccountType.findAll();
         return res.status(200).send(bankAccountTypes);
-    } catch (error) {
-        res.status(500).send({message: error.message});
-    }
-};
-
-
-/* -- Controlador para obtener una tarjeta de usuario -- */
-const getUserPaymentCard = async (req, res) => {
-    try {
-        const userID = req.params.userId;
-        const id = req.params.id;
-
-        const paymentCard = await PaymentCard.findOne({where: { userID, id }});
-
-        return res.status(200).send(paymentCard);
-    } catch (error) {
-        res.status(500).send({message: error.message});
-    }
-}
-
-
-/* -- Controlador para obtener tarjetas de usuario -- */
-const getUserPaymentCards = async (req, res) => {
-    try {
-        const userId = req.params.userId;
-        const paymentCards = await PaymentCard.findAll({where: { userId }});
-        return res.status(200).send(paymentCards);
     } catch (error) {
         res.status(500).send({message: error.message});
     }
@@ -85,23 +57,6 @@ const getUserBankAccounts = async (req, res) => {
 };
 
 
-/* -- Controlador para registrar tarjeta de usuario -- */
-const createUserPaymentCard = async (req, res) => {
-    try {
-        const { name, number, expiryDate, isFavorite = false, userId } = req.body;
-
-        if (!name || !number || !expiryDate || isFavorite || !userId) {
-            return res.status(400).send({ message: "Faltan campos requeridos en la solicitud de tarjeta de pago" });
-        }
-
-        const paymentCard = await PaymentCard.create({ name, number, expiryDate, isFavorite, userId });
-        return res.status(201).send(paymentCard);
-    } catch (error) {
-        res.status(500).send({message: error.message});
-    }
-};
-
-
 /* -- Controlador para registrar cuenta bancaria de usuario -- */
 const createUserBankAccount = async (req, res) => {
     try {
@@ -113,32 +68,6 @@ const createUserBankAccount = async (req, res) => {
 
         const bankAccount = await BankAccount.create({ accountHolder, accountNumber, accountTypeID, bankNameID, isFavorite, userID: userId });
         return res.status(201).send(bankAccount);
-    } catch (error) {
-        res.status(500).send({message: error.message});
-    }
-};
-
-
-/* -- Controlador para editar tarjeta de usuario -- */
-const updateUserPaymentCard =  async (req, res) => {
-    try {
-        const { id } = req.params;
-        const { name, number, expiryDate, isFavorite, userId } = req.body;
-
-        // Construir objeto de actualización solo con campos proporcionados
-        let updateFields = {};
-        if (name !== undefined) updateFields.name = name;
-        if (number !== undefined) updateFields.number = number;
-        if (expiryDate !== undefined) updateFields.expiryDate = expiryDate;
-        if (isFavorite !== undefined) updateFields.isFavorite = isFavorite;
-
-        const [updated] = await PaymentCard.update(updateFields, { where: { id, userId } });
-
-        if (updated) {
-            return res.status(200).send({ message: "Tarjeta actualizada correctamente." });
-        } else {
-            return res.status(400).send({ message: "No se pudo actualizar la tarjeta o no existe" });
-        }
     } catch (error) {
         res.status(500).send({message: error.message});
     }
@@ -170,28 +99,6 @@ const updateUserBankAccount = async (req, res) => {
         res.status(500).send({message: error.message});
     }
 };
-
-
-/* -- Controlador asignar una tarjeta diferente asociada como favorita  -- */
-const setFavoritePaymentCard = async (req, res) => {
-    try {
-        const { userId, id } = req.body;
-
-        // Reset all cards' favorite status for the user
-        await PaymentCard.update({ isFavorite: false }, { where: { userId } });
-
-        // Set the selected card as favorite
-        const card = await PaymentCard.update({ isFavorite: true }, { where: { id: id, userId } });
-
-        if (card == 1) {
-            res.status(200).send({message: "Tarjeta de pago favorita actualizada correctamente."});
-        } else {
-            res.status(404).send({ message: "No se pudo actualizar la tarjeta de pago favorita o no existe" });
-        }
-    } catch (error) {
-        res.status(500).send({message: error.message})
-    }
-}
 
 
 /* -- Controlador asignar una cuenta de banco diferente asociada como favorita  -- */
@@ -333,22 +240,6 @@ const deleteUserBankAccount = async (req, res) => {
 };
 
 
-// Controlador para eliminar una tarjeta de pago
-const deleteUserPaymentCard = async (req, res) => {
-    try {
-        const { userId, id } = req.body;
-        const result = await PaymentCard.destroy({ where: { id: id, userId } });
-        if (result) {
-            res.status(200).send({ message: "Tarjetad de pago eliminada satisfactoriamente" });
-        } else {
-            res.status(404).send({ message: "No se encontro la tarjeta" });
-        }
-    } catch (error) {
-        res.status(500).send({ message: error.message });
-    }
-};
-
-
 /* -- Controlador para obtener el balance de la cuenta, wallet -- */
 
 
@@ -370,22 +261,16 @@ module.exports = {
     getBankAccountTypes,
     getUserBankAccount,
     getUserBankAccounts,
-    getUserPaymentCard,
-    getUserPaymentCards,
     createBank,
     createBankAccountType,
     createUserBankAccount,
-    createUserPaymentCard,
     updateBank,
     updateBankAccountType,
     updateUserBankAccount,
-    updateUserPaymentCard,   
-    setFavoritePaymentCard,
     setFavoriteBankAccount,    
     deleteBank,
     deleteBankAccountType,
     deleteUserBankAccount,
-    deleteUserPaymentCard,
 };
 
 

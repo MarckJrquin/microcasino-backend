@@ -33,27 +33,6 @@ billingRouter.get(
 
 
 billingRouter.get(
-    '/user/:userId/payment-card/:id', 
-    [
-        authJwt.verifyToken,
-        billingMiddleware.verifyUserExists,
-        billingMiddleware.verifyPaymentCardExists
-    ],  
-    billingController.getUserPaymentCard
-);
-
-
-billingRouter.get(
-    '/user/:userId/payment-cards', 
-    [
-        authJwt.verifyToken,
-        billingMiddleware.verifyUserExists
-    ],  
-    billingController.getUserPaymentCards
-);
-
-
-billingRouter.get(
     '/user/:userId/bank-account/:id', 
     [
         authJwt.verifyToken,
@@ -105,18 +84,6 @@ billingRouter.post(
 );
 
 
-billingRouter.post(
-    '/user/create/payment-card',
-    [
-        authJwt.verifyToken,
-        billingMiddleware.verifyUserExists,
-        billingMiddleware.verifyPaymentCardRequest,
-        billingMiddleware.checkExpiredPaymentCard
-    ],   
-    billingController.createUserPaymentCard
-);
-
-
 billingRouter.put(
     '/banks/:id', 
     [
@@ -149,31 +116,6 @@ billingRouter.put(
         billingMiddleware.checkDuplicateBankAccount
     ],  
     billingController.updateUserBankAccount
-);
-
-
-billingRouter.put(
-    '/user/update/payment-card/:id', 
-    [
-        authJwt.verifyToken,
-        billingMiddleware.verifyUserExists,
-        billingMiddleware.verifyPaymentCardExists,
-        billingMiddleware.verifyPaymentCardRequest,
-        billingMiddleware.checkDuplicatePaymentCard,
-        billingMiddleware.checkExpiredPaymentCard
-    ],  
-    billingController.updateUserPaymentCard
-);
-
-
-billingRouter.put(
-    '/user/set/favorite-payment-card', 
-    [
-        authJwt.verifyToken,
-        billingMiddleware.verifyUserExists,
-        billingMiddleware.verifyPaymentCardExists
-    ],  
-    billingController.setFavoritePaymentCard
 );
 
 
@@ -218,17 +160,6 @@ billingRouter.delete(
         billingMiddleware.verifyBankAccountExists
     ],  
     billingController.deleteUserBankAccount
-);
-
-
-billingRouter.delete(
-    '/user/delete/payment-card', 
-    [
-        authJwt.verifyToken,
-        billingMiddleware.verifyUserExists,
-        billingMiddleware.verifyPaymentCardExists
-    ],  
-    billingController.deleteUserPaymentCard
 );
 
 
