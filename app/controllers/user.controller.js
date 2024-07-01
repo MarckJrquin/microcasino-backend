@@ -75,7 +75,7 @@ const getPhotoProfile = async (req, res) => {
 const updateProfile = async (req, res) => {
     try {
         const userId = req.userId;
-        let fieldsToUpdate = req.body; 
+        const fieldsToUpdate = filterValidFields(req.body);
 
         const user = await User.findByPk(userId, {
             include: {
@@ -83,27 +83,22 @@ const updateProfile = async (req, res) => {
             },
         });
 
-        // Actualiza los campos enviados en la solicitud en el modelo User
-        for (const key in fieldsToUpdate) {
-            if (fieldsToUpdate[key] !== "" && fieldsToUpdate[key] !== null && fieldsToUpdate[key] !== undefined) {
-                user[key] = fieldsToUpdate[key];
-            }
+        if (!user) {
+            return res.status(404).send({ message: "Usuario no encontrado." });
         }
 
-        // Actualiza los campos enviados en la solicitud en el modelo Person
+        // Actualiza los campos del modelo User
+        Object.assign(user, fieldsToUpdate);
+
+        // Si hay campos para Person, actualiza también
         if (user.person) {
-            for (const key in fieldsToUpdate) {
-                if (fieldsToUpdate[key] !== "" && fieldsToUpdate[key] !== null && fieldsToUpdate[key] !== undefined) {
-                    user.person[key] = fieldsToUpdate[key];
-                }
-            }
+            const personFieldsToUpdate = filterValidFields(req.body);
+            Object.assign(user.person, personFieldsToUpdate);
+            await user.person.save();
         }
 
         await user.save();
-        if (user.person) {
-            await user.person.save();
-        }
-  
+
         res.status(200).send({ message: "Perfil actualizado exitosamente" });
     } catch (error) {
         res.status(500).send({ message: error.message });
@@ -153,6 +148,16 @@ const moderatorBoard = (req, res) => {
     res.status(200).send("Moderator Content.");
 };
   
+
+// Utilidad para filtrar campos válidos
+const filterValidFields = (fields) => {
+    return Object.fromEntries(
+        Object.entries(fields).filter(
+            ([, value]) => value !== "" && value !== null && value !== undefined
+        )
+    );
+};
+
 
 module.exports = {
     getProfile,

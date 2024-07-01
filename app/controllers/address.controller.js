@@ -89,32 +89,26 @@ const setFavoriteAddress = async (req, res) => {
 }
 
 
-/* -- Controlador para Editar una direccion de un usuario -- */
+/*-- Controlador para editar una dirección de un usuario --*/
 const updateUserAddress = async (req, res) => {
     try {
         const userID = req.params.userId || req.body.userId;
         const id = req.params.id || req.body.id;
-        const { country, state, address1, address2, floorApartmentHouseNumber, reference } = req.body;
+        const fieldsToUpdate = filterValidFields(req.body);
 
-        let updateFields = {};
-        if (country !== undefined || country != "") updateFields.country = country;
-        if (state !== undefined || state != "") updateFields.state = state;
-        if (address1 !== undefined || address1 != "") updateFields.address1 = address1;
-        if (address2 !== undefined || address2 != "") updateFields.address2 = address2;
-        if (floorApartmentHouseNumber !== undefined || floorApartmentHouseNumber != "") updateFields.floorApartmentHouseNumber = floorApartmentHouseNumber;
-        if (reference !== undefined || reference !== "" ) updateFields.reference = reference;
-
-        const [updated] = await Address.update(updateFields, { where: { id, userID } });
+        const [updated] = await Address.update(fieldsToUpdate, {
+            where: { id, userID },
+        });
 
         if (updated) {
             return res.status(200).send({ message: "Dirección actualizada correctamente" });
         } else {
-            return res.status(400).send({ message: "No se pudo actualizar la dirección"});
+            return res.status(400).send({ message: "No se pudo actualizar la dirección" });
         }
     } catch (error) {
         res.status(500).send({ message: error.message });
     }
-}
+};
 
 
 /* -- Controlador para Eliminar una direccion de un usuario -- */
@@ -134,6 +128,16 @@ const deleteUserAddress = async (req, res) => {
         res.status(500).send({ message: error.message });
     }
 }
+
+
+// Utilidad para filtrar campos válidos
+const filterValidFields = (fields) => {
+    return Object.fromEntries(
+        Object.entries(fields).filter(
+            ([, value]) => value !== "" && value !== null && value !== undefined
+        )
+    );
+};
 
   
 module.exports = {

@@ -36,7 +36,19 @@ const getUserBankAccount = async (req, res) => {
         const userId = req.params.userId;
         const id = req.params.id;
 
-        const bankAccount = await BankAccount.findOne({where: { userId, id }});
+        const bankAccount = await BankAccount.findOne({
+            where: { userId, id },
+            include: [
+                {
+                    model: BankAccountType,
+                    attributes: ['name']
+                },
+                {
+                    model: Bank,
+                    attributes: ['name']
+                }
+            ]
+        });
 
         return res.status(200).send(bankAccount);
     } catch (error) {
@@ -49,7 +61,19 @@ const getUserBankAccount = async (req, res) => {
 const getUserBankAccounts = async (req, res) => {
     try {
         const userId = req.params.userId;
-        const bankAccounts = await BankAccount.findAll({where: { userId }});
+        const bankAccounts = await BankAccount.findAll({
+            where: { userId },
+            include: [
+                {
+                    model: BankAccountType,
+                    attributes: ['name']
+                },
+                {
+                    model: Bank,
+                    attributes: ['name']
+                }
+            ]
+        });
         return res.status(200).send(bankAccounts);
     } catch (error) {
         res.status(500).send({message: error.message});
@@ -60,7 +84,7 @@ const getUserBankAccounts = async (req, res) => {
 /* -- Controlador para registrar cuenta bancaria de usuario -- */
 const createUserBankAccount = async (req, res) => {
     try {
-        const { accountHolder, accountNumber, accountTypeID, bankNameID, isFavorite = false, userId } = req.body;
+        const { accountHolder, accountNumber, accountTypeID, bankNameID, isFavorite, userId } = req.body;
 
         if (!accountHolder || !accountNumber || !accountTypeID || !bankNameID || !userId) {
             return res.status(400).send({ message: "Faltan campos requeridos en la solicitud de crear cuenta bancaria" });
@@ -78,17 +102,15 @@ const createUserBankAccount = async (req, res) => {
 const updateUserBankAccount = async (req, res) => {
     try {
         const id = req.body.id || req.params.id;
-        const { accountHolder, accountNumber, accountTypeID, bankNameID, isFavorite, userId } = req.body;
+        const userID = req.body.userId || req.params.userId;
 
-        // Construir objeto de actualización solo con campos proporcionados
-        let updateFields = {};
-        if (accountHolder !== undefined) updateFields.accountHolder = accountHolder;
-        if (accountNumber !== undefined) updateFields.accountNumber = accountNumber;
-        if (accountTypeID !== undefined) updateFields.accountTypeID = accountTypeID;
-        if (bankNameID !== undefined) updateFields.bankNameID = bankNameID;
-        if (isFavorite !== undefined) updateFields.isFavorite = isFavorite;
+        console.log("as", req.body);
 
-        const [updated] = await BankAccount.update(updateFields, { where: { id, userID: userId } });
+        const fieldsToUpdate = filterValidFields(req.body);
+
+        const [updated] = await BankAccount.update(fieldsToUpdate, {
+            where: { id, userID },
+        });
         
         if (updated) {
             return res.status(200).send({ message: "Cuenta bancaria actualizada correctamente." });
@@ -254,6 +276,15 @@ const deleteUserBankAccount = async (req, res) => {
 
 /* -- Controlador para obtener el historial de retiro de dinero -- */
 
+
+// Utilidad para filtrar campos válidos
+const filterValidFields = (fields) => {
+    return Object.fromEntries(
+        Object.entries(fields).filter(
+            ([, value]) => value !== "" && value !== null && value !== undefined
+        )
+    );
+};
 
 
 module.exports = {
