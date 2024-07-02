@@ -84,6 +84,23 @@ billingRouter.post(
 );
 
 
+billingRouter.post(
+    '/create-checkout-session', 
+    [
+        authJwt.verifyToken,
+        billingMiddleware.verifyUserExists,
+        billingMiddleware.verifyProductExists
+    ],
+    billingController.createCheckoutSession
+);
+
+billingRouter.post(
+    '/webhook', 
+    express.raw({ type: 'application/json' }),
+    billingController.webhook
+);
+
+
 billingRouter.put(
     '/banks/:id', 
     [

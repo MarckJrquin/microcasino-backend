@@ -33,6 +33,9 @@ db.address = require("./address.model.js")(sequelize, Sequelize);
 db.bank = require("./bank.model.js")(sequelize, Sequelize);
 db.bankAccount = require("./bankAccount.model.js")(sequelize, Sequelize);
 db.bankAccountType = require("./bankAccountType.model.js")(sequelize, Sequelize);
+db.userCredit = require("./userCredit.model.js")(sequelize, Sequelize); // eliminar
+db.creditTransaction = require("./creditTransaction.model.js")(sequelize, Sequelize); // eliminar
+db.product = require("./product.model.js")(sequelize, Sequelize);
 
 
 /* -- Establece una relación de muchos a muchos entre los roles y los usuarios -- */
@@ -55,7 +58,7 @@ db.person.belongsTo(db.user,{
 });
 
 
-/* -- Establecer la relación uno a muchos entre usuario y direcciones -- */
+/* -- Establece la relación uno a muchos entre usuario y direcciones -- */
 db.user.hasMany(db.address, {
     foreignKey: 'userID',
     onDelete: 'CASCADE'
@@ -66,7 +69,7 @@ db.address.belongsTo(db.user, {
 });
 
 
-/* -- Establecer la relación uno a muchos entre usuario y cuentas bancarias -- */
+/* -- Establece la relación uno a muchos entre usuario y cuentas bancarias -- */
 db.user.hasMany(db.bankAccount, {
     foreignKey: 'userID',
     onDelete: 'CASCADE'
@@ -77,7 +80,7 @@ db.bankAccount.belongsTo(db.user, {
 });
 
 
-/* -- Establecer la relación entre cuenta bancaria y tipo de cuenta -- */
+/* -- Establece la relación entre cuenta bancaria y tipo de cuenta -- */
 db.bankAccountType.hasMany(db.bankAccount, {
     foreignKey: 'accountTypeID',
     onDelete: 'CASCADE'
@@ -88,7 +91,7 @@ db.bankAccount.belongsTo(db.bankAccountType, {
 });
 
 
-/* -- Establecer la relación entre cuenta bancaria y nombre de banco -- */
+/* -- Establece la relación entre cuenta bancaria y nombre de banco -- */
 db.bank.hasMany(db.bankAccount, {
     foreignKey: 'bankNameID',
     onDelete: 'CASCADE'
@@ -96,6 +99,39 @@ db.bank.hasMany(db.bankAccount, {
 db.bankAccount.belongsTo(db.bank, {
     foreignKey: 'bankNameID',
     onDelete: 'CASCADE'
+});
+
+
+/* -- Establece la relación uno a uno entre usuario y crédito de usuario -- */
+db.user.hasOne(db.userCredit, { 
+    foreignKey: 'userID', 
+    onDelete: 'CASCADE' 
+});
+db.userCredit.belongsTo(db.user, { 
+    foreignKey: 'userID', 
+    onDelete: 'CASCADE' 
+});
+
+
+/* -- Establece la relación uno a muchos entre crédito de usuario y transacciones de crédito -- */
+db.user.hasMany(db.creditTransaction, { 
+    foreignKey: 'userID', 
+    onDelete: 'CASCADE' 
+});
+db.creditTransaction.belongsTo(db.user, { 
+    foreignKey: 'userID', 
+    onDelete: 'CASCADE' 
+});
+
+
+/* -- Establece la relación uno a muchos entre productos y transacciones de crédito -- */
+db.product.hasMany(db.creditTransaction, { 
+    foreignKey: 'productID', 
+    onDelete: 'CASCADE' 
+});
+db.creditTransaction.belongsTo(db.product, { 
+    foreignKey: 'productID', 
+    onDelete: 'CASCADE' 
 });
 
   
@@ -184,6 +220,18 @@ async function syncAndSeed() {
                 { name: 'The Bank of Nova Scotia (SCOTIABANK)' },
                 { name: 'Towerbank International Inc.' },
                 { name: 'Unibank, S.A.' },
+            ]);
+        }
+
+        const productCount = await db.product.count();
+        if (productCount === 0) {
+            await db.product.bulkCreate([
+                { name: '40 Créditos', price: 10.00, credits: 40 },
+                { name: '100 Créditos', price: 20.00, credits: 100 },
+                { name: '170 Créditos', price: 30.00, credits: 170 },
+                { name: '250 Créditos', price: 40.00, credits: 250 },
+                { name: '340 Créditos', price: 50.00, credits: 340 },
+                { name: '700 Créditos', price: 100.00, credits: 700 },
             ]);
         }
 

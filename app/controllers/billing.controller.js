@@ -1,12 +1,22 @@
+const dotenv = require('dotenv');
 const bcrypt = require ('bcryptjs');  
+const Stripe = require('stripe');
+
+const stripeConfig = require("../config/stripe.config");
+const frontendConfig = require('../config/frontend.config');
 
 const db = require("../models");
+const billingRouter = require('../routes/billing.routes');
 const User = db.user;
 const Person = db.person;
 const Bank = db.bank;
 const BankAccount = db.bankAccount;
 const BankAccountType = db.bankAccountType;
+const UserCredit = db.userCredit;
+const CreditTransaction = db.creditTransaction;
+const Product = db.product;
 
+const stripe = new Stripe(stripeConfig.STRIPE_SECRET_KEY);
 
 /* -- Controlador para obtener el listado de bancos -- */
 const getBanks = async (req, res) => {
@@ -277,6 +287,105 @@ const deleteUserBankAccount = async (req, res) => {
 /* -- Controlador para obtener el historial de retiro de dinero -- */
 
 
+
+/* -- Controlador para manejar la creación de la sesión de Stripe -- */
+const createCheckoutSession = async (req, res) => {
+    try {
+        const userId = req.body.userId || req.params.userId;
+        const productId = req.body.id || req.params.id;
+        const amount = req.body.price || req.params.price;
+
+        if (!userId || !productId || !amount) {
+            return res.status(400).send({ message: "Faltan campos requeridos en la solicitud de depósito" });
+        }
+
+        const user = await User.findByPk(userId);
+        const product = await Product.findByPk(productId);
+
+        const session = await stripe.checkout.sessions.create({
+            payment_method_types: ['card'],
+            line_items: [
+                {
+                    price_data: {
+                        currency: 'usd',
+                        product_data: {
+                            name: product.name,
+                        },
+                        unit_amount: amount * 100, // Stripe expects amounts in cents
+                    },
+                    quantity: 1,
+                },
+            ],
+            mode: 'payment',
+            success_url: `${frontendConfig.URL}/payment/success`,
+            cancel_url: `${frontendConfig.URL}/payment/cancel`,
+            metadata: {
+                userId: user.id,
+                username: user.username,
+                email: user.email,
+                productId: product.id,
+                productName: product.name,
+                amount: amount,
+            }
+        });
+
+        console.log(session);
+
+        return res.status(201).send({ session });
+    } catch (error) {
+        res.status(500).send({ message: error.message });
+    }
+};
+
+
+const webhook = async (req, res) => {
+    const sig = req.headers['stripe-signature'];
+    let event;
+
+    try {
+        event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
+    } catch (error) {
+        return res.status(400).send(`Webhook Error: ${error.message}`);
+    }
+
+    if (event.type === 'checkout.session.completed') {
+        const session = event.data.object;
+        
+        console.log(session);
+
+        // Obtener metadata
+        const userId = session.metadata.userId;
+        const productId = session.metadata.productId;
+
+
+        // Obtener detalles del producto
+        const product = await Product.findByPk(productId);
+
+        // Obtener el usuario
+        const user = await User.findByPk(userId);
+
+        if (user && product) {
+            // Actualizar el balance de créditos del usuario
+            const userCredit = await UserCredit.findOne({ where: { userID: user.id } });
+            userCredit.balance += product.credits;
+            await userCredit.save();
+
+            // Registrar la transacción
+            await CreditTransaction.create({
+                userID: user.id,
+                type: 'deposit',
+                amount: product.credits,
+                timestamp: new Date(),
+                stripeSessionId: session.id
+            });
+        }
+    }
+
+    res.status(200).json({ received: true });
+};
+
+
+
 // Utilidad para filtrar campos válidos
 const filterValidFields = (fields) => {
     return Object.fromEntries(
@@ -288,6 +397,8 @@ const filterValidFields = (fields) => {
 
 
 module.exports = {
+    createCheckoutSession,
+    webhook,
     getBanks,
     getBankAccountTypes,
     getUserBankAccount,

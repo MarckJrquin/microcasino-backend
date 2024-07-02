@@ -10,6 +10,7 @@ const authRoutes = require("./app/routes/auth.routes");
 const userRoutes = require("./app/routes/user.routes");
 const billingRoutes = require("./app/routes/billing.routes");
 const addressRoutes = require("./app/routes/address.routes");
+const productRoutes = require("./app/routes/product.routes");
 
 dotenv.config();
 
@@ -47,8 +48,9 @@ app.get('/', (req, res) => {
 /* -- Rutas -- */
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/user', userRoutes);
-app.use('/api/v1/billing', billingRoutes);
 app.use('/api/v1/address', addressRoutes);
+app.use('/api/v1/billing', billingRoutes);
+app.use('/api/v1/products', productRoutes);
 
 
 /* -- Se configura el puerto y escucha las solicitudes entrantes -- */
