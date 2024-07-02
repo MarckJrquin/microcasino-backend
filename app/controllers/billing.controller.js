@@ -329,8 +329,6 @@ const createCheckoutSession = async (req, res) => {
             }
         });
 
-        console.log(session);
-
         return res.status(201).send({ session });
     } catch (error) {
         res.status(500).send({ message: error.message });
@@ -339,45 +337,86 @@ const createCheckoutSession = async (req, res) => {
 
 
 const webhook = async (req, res) => {
-    const sig = req.headers['stripe-signature'];
-    let event;
+    console.log('Webhook received', req.body);
 
-    try {
-        event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
-    } catch (error) {
-        return res.status(400).send(`Webhook Error: ${error.message}`);
+    let event = req.body;
+    const endpointSecret = process.env.STRIPE_SIGNING_SECRET;
+
+    if(endpointSecret) {
+        const signature = req.headers['stripe-signature'];
+        try {
+            event = stripe.webhooks.constructEvent(
+                req.body, 
+                signature, 
+                endpointSecret
+            );
+        } catch (error) {
+            console.log(`⚠️  Webhook signature verification failed.`, error.message);
+            return res.status(400).send(`Webhook Error: ${error.message}`);
+        }
     }
 
+    let subscription;
+    let status;
+ 
+
     if (event.type === 'checkout.session.completed') {
+
+        console.log("Checkout session completed");
+
         const session = event.data.object;
-        
-        console.log(session);
+
+        console.log("Session", session);
 
         // Obtener metadata
         const userId = session.metadata.userId;
         const productId = session.metadata.productId;
 
+        console.log("User ID", userId);
+        console.log("Product ID", productId);
 
-        // Obtener detalles del producto
-        const product = await Product.findByPk(productId);
+        try {
+            // Obtener detalles del producto
+            const product = await Product.findByPk(productId);
 
-        // Obtener el usuario
-        const user = await User.findByPk(userId);
+            // Obtener el usuario
+            const user = await User.findByPk(userId);
 
-        if (user && product) {
-            // Actualizar el balance de créditos del usuario
-            const userCredit = await UserCredit.findOne({ where: { userID: user.id } });
-            userCredit.balance += product.credits;
-            await userCredit.save();
+            console.log("User", user);
+            console.log("Product", product);
+            
 
-            // Registrar la transacción
-            await CreditTransaction.create({
-                userID: user.id,
-                type: 'deposit',
-                amount: product.credits,
-                timestamp: new Date(),
-                stripeSessionId: session.id
-            });
+            if (user && product) {
+                console.log("User and Product found");
+
+                // Actualizar el balance de créditos del usuario
+                const userCredit = await UserCredit.findOne({ where: { userID: userId } });
+
+                if (userCredit) {
+                    console.log("UserCredit found");
+                    userCredit.balance += product.dataValues.credits;
+                    await userCredit.save();
+
+                    // Registrar la transacción
+                    await CreditTransaction.create({
+                        userID: userId,
+                        type: 'deposit',
+                        credits: product.dataValues.credits,
+                        amount: product.dataValues.price,
+                        timestamp: new Date(),
+                        stripeSessionId: session.id,
+                        productID: productId
+                    });
+
+                    console.log("Transaction created");
+                } else {
+                    console.log(`UserCredit not found for user ID ${user.id}`);
+                }
+            } else {
+                console.log(`User or Product not found: userId ${userId}, productId ${productId}`);
+            }
+        } catch (error) {
+            console.error(`Error processing webhook: ${error.message}`);
         }
     }
 
@@ -385,8 +424,70 @@ const webhook = async (req, res) => {
 };
 
 
+// const webhook = async (req, res) => {
+//     console.log('Webhook received', req.body);
+
+//     let signingSecret = process.env.STRIPE_SIGNING_SECRET;
+
+//     const sig = req.headers['stripe-signature'];
+//     let event;
+
+//     try {
+//         event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_SIGNING_SECRET);
+//     } catch (error) {
+//         console.log(`⚠️  Webhook signature verification failed.`);
+//         return res.status(400).send(`Webhook Error: ${error.message}`);
+//     }
+
+//     if (event.type === 'checkout.session.completed') {
+
+//         const session = event.data.object;
+
+//         // Obtener metadata
+//         const userId = session.metadata.userId;
+//         const productId = session.metadata.productId;
+
+//         try {
+//             // Obtener detalles del producto
+//             const product = await Product.findByPk(productId);
+
+//             // Obtener el usuario
+//             const user = await User.findByPk(userId);
+
+//             if (user && product) {
+//                 // Actualizar el balance de créditos del usuario
+//                 const userCredit = await UserCredit.findOne({ where: { userID: user.id } });
+//                 if (userCredit) {
+//                     userCredit.balance += product.credits;
+//                     await userCredit.save();
+
+//                     // Registrar la transacción
+//                     await CreditTransaction.create({
+//                         userID: user.id,
+//                         type: 'deposit',
+//                         amount: product.credits,
+//                         timestamp: new Date(),
+//                         stripeSessionId: session.id
+//                     });
+//                 } else {
+//                     console.log(`UserCredit not found for user ID ${user.id}`);
+//                 }
+//             } else {
+//                 console.log(`User or Product not found: userId ${userId}, productId ${productId}`);
+//             }
+//         } catch (error) {
+//             console.error(`Error processing webhook: ${error.message}`);
+//         }
+//     }
+
+//     res.status(200).json({ received: true });
+// };
+
+
 
 // Utilidad para filtrar campos válidos
+
+
 const filterValidFields = (fields) => {
     return Object.fromEntries(
         Object.entries(fields).filter(

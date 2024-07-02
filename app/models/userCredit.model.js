@@ -9,10 +9,10 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.INTEGER,
             allowNull: false
         },
-        balance: {
-            type: DataTypes.DECIMAL(10, 2),
-            defaultValue: 0.00
-        }
+        credits: {
+            type: DataTypes.INTEGER,
+            defaultValue: 0
+        },
     }, {
         freezeTableName: true
     });

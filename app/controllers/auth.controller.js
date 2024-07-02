@@ -7,6 +7,7 @@ const db = require("../models");
 const User = db.user;
 const Role = db.role;
 const Person = db.person; 
+const UserCredit = db.userCredit;
 const Op = db.Sequelize.Op;
 
 
@@ -117,6 +118,13 @@ const signup = async (req, res) => {
 
         /*-- Asocia la información personal al usuario --*/
         await user.setPerson(person);
+
+
+        /* -- Crea el registro de balance de usuario en UserCredit -- */
+        await UserCredit.create({
+            userID: user.id,
+            balance: 0.00  // Balance inicial
+        });
 
         // Generar un token de confirmación
         const token = jwt.sign({ id: user.id }, config.secret, { expiresIn: '2h' });

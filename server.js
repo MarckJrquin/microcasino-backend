@@ -17,12 +17,19 @@ dotenv.config();
 
 /* --  Crea una instancia de la aplicación Express  -- */
 const app = express();
+
 /* --  Se usa el middleware "cors" en la aplicación -- */
 app.use(cors());
-/* -- Parsea las solicitudes con el tipo de contenido - application/json -- */
-app.use(express.json());
+
 /* -- Parsea las solicitudes con el tipo de contenido - application/x-www-form-urlencoded -- */
 app.use(express.urlencoded({ extended: true }));
+
+/* -- Configuración del webhook de Stripe antes de express.json() -- */
+app.post('/api/v1/billing/webhook', express.raw({ type: 'application/json' }), require('./app/controllers/billing.controller').webhook);
+
+/* -- Parsea las solicitudes con el tipo de contenido - application/json -- */
+app.use(express.json());
+
 
 
 /* -- Se configura el middleware "cookie-session" en la aplicación -- */

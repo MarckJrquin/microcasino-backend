@@ -94,11 +94,12 @@ billingRouter.post(
     billingController.createCheckoutSession
 );
 
-billingRouter.post(
-    '/webhook', 
-    express.raw({ type: 'application/json' }),
-    billingController.webhook
-);
+
+// billingRouter.post(
+//     '/webhook', 
+//     express.raw({type: 'application/json'}),
+//     billingController.webhook
+// );
 
 
 billingRouter.put(
