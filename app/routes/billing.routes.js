@@ -102,6 +102,15 @@ billingRouter.post(
 // );
 
 
+billingRouter.get(
+    '/transaction-details',
+    [
+        authJwt.verifyToken
+    ],
+    billingController.getTransactionDetails
+);
+
+
 billingRouter.put(
     '/banks/:id', 
     [

@@ -11,8 +11,6 @@ const checkUserExists = async (req, res, next) => {
     // Verificar si el usuario existe en la base de datos por ID
     const user = await User.findByPk(userId);
 
-    console.log("verify user exists", user);
-
     if (!user) {
       return res.status(404).send({ message: "Usuario no encontrado" });
     }

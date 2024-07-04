@@ -1,7 +1,7 @@
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const config = require("../config/auth.config");
-const { sendConfirmationEmail } = require("../helpers/mailer");
+const { sendConfirmationEmail } = require("../mail/mailer");
 
 const db = require("../models");
 const User = db.user;
@@ -133,6 +133,7 @@ const signup = async (req, res) => {
         sendConfirmationEmail(user.email, token);
   
         res.status(201).send({ 
+            email: user.email,
             message: 'Usuario registrado con éxito! Por favor revisa tu correo electrónico para confirmar tu registro.' 
         });
     } catch (error) {

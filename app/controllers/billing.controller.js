@@ -329,6 +329,17 @@ const createCheckoutSession = async (req, res) => {
             }
         });
 
+        // Guardar los detalles de la transacción en la sesión
+        req.session.transactionDetails = {
+            userId: user.id,
+            username: user.username,
+            email: user.email,
+            productId: product.id,
+            productName: product.name,
+            amount: amount,
+            credits: product.credits,
+        };
+
         return res.status(201).send({ session });
     } catch (error) {
         res.status(500).send({ message: error.message });
@@ -355,10 +366,6 @@ const webhook = async (req, res) => {
             return res.status(400).send(`Webhook Error: ${error.message}`);
         }
     }
-
-    let subscription;
-    let status;
- 
 
     if (event.type === 'checkout.session.completed') {
 
@@ -394,15 +401,15 @@ const webhook = async (req, res) => {
 
                 if (userCredit) {
                     console.log("UserCredit found");
-                    userCredit.balance += product.dataValues.credits;
+                    userCredit.credits += product.dataValues.credits;
                     await userCredit.save();
 
                     // Registrar la transacción
                     await CreditTransaction.create({
                         userID: userId,
                         type: 'deposit',
-                        credits: product.dataValues.credits,
                         amount: product.dataValues.price,
+                        credits: product.dataValues.credits,
                         timestamp: new Date(),
                         stripeSessionId: session.id,
                         productID: productId
@@ -422,6 +429,14 @@ const webhook = async (req, res) => {
 
     res.status(200).json({ received: true });
 };
+
+
+const getTransactionDetails = async (req, res) => {
+    if (!req.session.transactionDetails) {
+        return res.status(404).send({ message: 'Transaction details not found' });
+    }
+    res.send(req.session.transactionDetails);
+}
 
 
 // const webhook = async (req, res) => {
@@ -500,6 +515,7 @@ const filterValidFields = (fields) => {
 module.exports = {
     createCheckoutSession,
     webhook,
+    getTransactionDetails,
     getBanks,
     getBankAccountTypes,
     getUserBankAccount,
