@@ -3,6 +3,7 @@ const authRouter = express.Router({})
 
 const { verifySignUp, verifyForgotPass } = require("../middlewares");
 const authController = require("../controllers/auth.controller");
+const { verify } = require('jsonwebtoken');
 
 
 authRouter.use(function setCorsHeaders(req, res, next) {
@@ -11,11 +12,6 @@ authRouter.use(function setCorsHeaders(req, res, next) {
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
     next();
 });
-
-
-// authRouter.use(
-//     authController.checkUnconfirmedUsers
-// );
 
 
 authRouter.post(
@@ -56,6 +52,19 @@ authRouter.get(
     "/confirm/:token",
     authController.confirmRegistration
 );
+
+
+authRouter.post(
+    "/request-password-recovery",
+    authController.requestPasswordRecovery
+);
+
+
+authRouter.post(
+    "/reset-password",
+    authController.resetPassword
+);
+
 
 authRouter.get('/test', (req, res) => {
     res.json({ message: 'endpoint working' });

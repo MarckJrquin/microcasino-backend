@@ -17,6 +17,10 @@ module.exports = (sequelize, DataTypes) => {
       confirmed: {
         type: DataTypes.BOOLEAN,
         defaultValue: false
+      },
+      confirmationExpiresAt: {
+        type: DataTypes.DATE,
+        allowNull: false
       }
     }, {
       freezeTableName: true

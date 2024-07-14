@@ -85,13 +85,23 @@ billingRouter.post(
 
 
 billingRouter.post(
-    '/create-checkout-session', 
+    '/create-checkout-session-for-products', 
     [
         authJwt.verifyToken,
         billingMiddleware.verifyUserExists,
         billingMiddleware.verifyProductExists
     ],
-    billingController.createCheckoutSession
+    billingController.createCheckoutSessionForProducts
+);
+
+
+billingRouter.post(
+    '/create-checkout-session-for-credits', 
+    [
+        authJwt.verifyToken,
+        billingMiddleware.verifyUserExists,
+    ],
+    billingController.createCheckoutSessionForCredits
 );
 
 
@@ -187,6 +197,33 @@ billingRouter.delete(
         billingMiddleware.verifyBankAccountExists
     ],  
     billingController.deleteUserBankAccount
+);
+
+
+billingRouter.get(
+    '/user/:userId/credits',
+    [
+        authJwt.verifyToken
+    ],
+    billingController.getUserCreditsBalance
+);
+
+
+billingRouter.post(
+    '/user/withdraw-credits',
+    [
+        authJwt.verifyToken
+    ],
+    billingController.withdrawCredits
+);
+
+
+billingRouter.get(
+    '/user/:userId/transactions',
+    [
+        authJwt.verifyToken
+    ],
+    billingController.getCreditTransactionsHistory
 );
 
 

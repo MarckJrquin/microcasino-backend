@@ -11,6 +11,8 @@ const userRoutes = require("./app/routes/user.routes");
 const billingRoutes = require("./app/routes/billing.routes");
 const addressRoutes = require("./app/routes/address.routes");
 const productRoutes = require("./app/routes/product.routes");
+const gameRoutes = require("./app/routes/game.routes");
+const helpCenterRoutes = require("./app/routes/helpCenter.routes");
 
 dotenv.config();
 
@@ -29,7 +31,6 @@ app.post('/api/v1/billing/webhook', express.raw({ type: 'application/json' }), r
 
 /* -- Parsea las solicitudes con el tipo de contenido - application/json -- */
 app.use(express.json());
-
 
 
 /* -- Se configura el middleware "cookie-session" en la aplicación -- */
@@ -58,6 +59,8 @@ app.use('/api/v1/user', userRoutes);
 app.use('/api/v1/address', addressRoutes);
 app.use('/api/v1/billing', billingRoutes);
 app.use('/api/v1/products', productRoutes);
+app.use('/api/v1/games', gameRoutes);
+app.use('/api/v1/help-center', helpCenterRoutes);
 
 
 /* -- Se configura el puerto y escucha las solicitudes entrantes -- */

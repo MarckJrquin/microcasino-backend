@@ -33,9 +33,13 @@ db.address = require("./address.model.js")(sequelize, Sequelize);
 db.bank = require("./bank.model.js")(sequelize, Sequelize);
 db.bankAccount = require("./bankAccount.model.js")(sequelize, Sequelize);
 db.bankAccountType = require("./bankAccountType.model.js")(sequelize, Sequelize);
-db.userCredit = require("./userCredit.model.js")(sequelize, Sequelize); // eliminar
-db.creditTransaction = require("./creditTransaction.model.js")(sequelize, Sequelize); // eliminar
+db.userCredit = require("./userCredit.model.js")(sequelize, Sequelize); 
+db.creditTransaction = require("./creditTransaction.model.js")(sequelize, Sequelize);
 db.product = require("./product.model.js")(sequelize, Sequelize);
+db.game = require("./game.model.js")(sequelize, Sequelize);
+db.gameType = require("./gameType.model.js")(sequelize, Sequelize);
+db.helpCenter = require("./helpCenter.model.js")(sequelize, Sequelize);
+db.BannerAdd = require("./bannerAdd.model.js")(sequelize, Sequelize);
 
 
 /* -- Establece una relación de muchos a muchos entre los roles y los usuarios -- */
@@ -134,6 +138,17 @@ db.creditTransaction.belongsTo(db.product, {
     onDelete: 'CASCADE' 
 });
 
+
+/* -- Establece la relación entre un juego y tipo de juego -- */
+db.gameType.hasMany(db.game, {
+    foreignKey: 'gameTypeID',
+    onDelete: 'CASCADE'
+});
+db.game.belongsTo(db.gameType, {
+    foreignKey: 'gameTypeID',
+    onDelete: 'CASCADE'
+});
+
   
 async function syncAndSeed() {
     try {
@@ -226,14 +241,181 @@ async function syncAndSeed() {
         const productCount = await db.product.count();
         if (productCount === 0) {
             await db.product.bulkCreate([
-                { name: '40 Créditos', price: 10.00, credits: 40 },
-                { name: '100 Créditos', price: 20.00, credits: 100 },
-                { name: '170 Créditos', price: 30.00, credits: 170 },
-                { name: '250 Créditos', price: 40.00, credits: 250 },
-                { name: '340 Créditos', price: 50.00, credits: 340 },
-                { name: '700 Créditos', price: 100.00, credits: 700 },
+                { name: '40 Créditos', price: 10.00, credits: 40, picture: 'https://image.api.playstation.com/vulcan/ap/rnd/202308/2118/faeeed784e30344d710546e83e147aebcf764796ebff910f.jpg?w=5000&thumb=false' },
+                { name: '100 Créditos', price: 20.00, credits: 100, picture: 'https://image.api.playstation.com/vulcan/ap/rnd/202308/2118/faeeed784e30344d710546e83e147aebcf764796ebff910f.jpg?w=5000&thumb=false'},
+                { name: '170 Créditos', price: 30.00, credits: 170, picture: 'https://image.api.playstation.com/vulcan/ap/rnd/202308/2118/a65de1df047ac5e85b948ed2298e78e04ba16f6cb23e3714.jpg?w=5000&thumb=false'},
+                { name: '250 Créditos', price: 40.00, credits: 250, picture: 'https://image.api.playstation.com/vulcan/ap/rnd/202308/2118/ac1f3a90a8314513d548df54dd9606cefd31645b5f9ee29a.jpg?w=5000&thumb=false'},
+                { name: '340 Créditos', price: 50.00, credits: 340, picture: 'https://store-images.s-microsoft.com/image/apps.11742.14521269261070295.01bc443b-3a57-4c8f-b831-e2262b0ad319.9c6e344e-e86a-4359-a265-ed026382a0da?q=90&w=3000&h=2000'},
+                { name: '700 Créditos', price: 100.00, credits: 700, picture: 'https://image.api.playstation.com/vulcan/ap/rnd/202308/2121/15d7ba14bc94c683c6590c1f3d68ad3399bab4e1395e18e6.jpg?w=5000&thumb=false'},
             ]);
         }
+
+        const gameTypeCount = await db.gameType.count();
+        if (gameTypeCount === 0) {
+            await db.gameType.bulkCreate([
+                { 
+                    name: 'Ruleta', 
+                    shortDescription: 'Juego de ruleta', 
+                    longDescription: 'Juego de ruleta clásico', 
+                    url: '/games/ruleta',
+                    picture: 'https://images.pexels.com/photos/7594188/pexels-photo-7594188.jpeg', 
+                    icon: 'ruleta-icon.png' 
+                },
+                { 
+                    name: 'Blackjack', 
+                    shortDescription: 'Juego de blackjack', 
+                    longDescription: 'Juego de blackjack clásico', 
+                    url: '/games/blackjack',
+                    picture: 'https://www.megazap.fr/photo/art/grande/50982495-39229585.jpg?v=1603894442', 
+                    icon: 'blackjack-icon.png' 
+                },
+                { 
+                    name: 'Tragamonedas', 
+                    shortDescription: 'Juego de tragamonedas',
+                    longDescription: 'Juego de tragamonedas clásico', 
+                    url: '/games/slots',
+                    picture: 'https://slotfree.org/wp-content/uploads/2023/05/Loosest-Slots-123RF-1024x683.jpg', 
+                    icon: 'tragamonedas-icon.png' 
+                },
+                { 
+                    name: 'Baccarat', 
+                    shortDescription: 'Juego de baccarat', 
+                    longDescription: 'Juego de baccarat clásico', 
+                    url: '/games/baccarat',
+                    picture: 'https://www.theoceanac.com/sites/default/files/styles/room_slideshow_slide/public/2022-03/no-commission-baccarat-ocean-casino-resort.jpg?itok=JQ9iVJ-7', 
+                    icon: 'baccarat-icon.png' 
+                },
+            ]);
+
+            const gameTypes = await db.gameType.findAll();
+
+            const gamesData = [
+                { 
+                    name: '3 Slots', 
+                    shortDescription: 'Tragamonedas de 3 slots', 
+                    longDescription: 'Tragamonedas con 3 slots', 
+                    url: '/games/slots/3slots', 
+                    picture: 'https://www.grandcasinomn.com/_next/image?url=https%3A%2F%2Fedge.sitecorecloud.io%2Fmillelacscorp1-mlcv-prod-0352%2Fmedia%2FProject%2FMLCV%2FGrand-Casino%2FMaster-Site%2FPlay%2FHinckley%2FSlots%2FHK-slot-img-1000x800-v1.png%3Fh%3D800%26iar%3D0%26w%3D1000&w=1080&q=75', 
+                    icon: '3slots-icon.png', 
+                    gameTypeID: gameTypes.find(type => type.name === 'Tragamonedas').id 
+                },
+                { 
+                    name: '4 Slots', 
+                    shortDescription: 'Tragamonedas de 4 slots', 
+                    longDescription: 'Tragamonedas con 4 slots', 
+                    url: '/games/slots/4slots', 
+                    picture: 'https://betravingknows.com/wp-content/uploads/2019/07/slot-machines-gaming-floor_m.jpg', 
+                    icon: '4slots-icon.png', 
+                    gameTypeID: gameTypes.find(type => type.name === 'Tragamonedas').id 
+                },
+                { 
+                    name: '5 Slots', 
+                    shortDescription: 'Tragamonedas de 5 slots', 
+                    longDescription: 'Tragamonedas con 5 slots', 
+                    url: '/games/slots/5slots', 
+                    picture: 'https://www.talkingstickresort.com/media/8337/web-spinsider.png', 
+                    icon: '5slots-icon.png', 
+                    gameTypeID: gameTypes.find(type => type.name === 'Tragamonedas').id 
+                },
+                { 
+                    name: 'Ruleta Europea', 
+                    shortDescription: 'Ruleta Europea', 
+                    longDescription: 'Ruleta con reglas europeas', 
+                    url: '/games/ruleta/ruletaeuropea', 
+                    picture: 'https://images.pexels.com/photos/6664246/pexels-photo-6664246.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1', 
+                    icon: 'ruletaeuropea-icon.png', 
+                    gameTypeID: gameTypes.find(type => type.name === 'Ruleta').id 
+                },
+                { 
+                    name: 'Ruleta Americana', 
+                    shortDescription: 'Ruleta Americana', 
+                    longDescription: 'Ruleta con reglas americanas', 
+                    url: '/games/ruleta/ruletaamericana', 
+                    picture: 'https://images.pexels.com/photos/4677402/pexels-photo-4677402.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1', 
+                    icon: 'ruletaamericana-icon.png', 
+                    gameTypeID: gameTypes.find(type => type.name === 'Ruleta').id 
+                },
+                { 
+                    name: 'Ruleta Francesa', 
+                    shortDescription: 'Ruleta Francesa', 
+                    longDescription: 'Ruleta con reglas francesas', 
+                    url: '/games/ruleta/ruletafrancesa', 
+                    picture: 'https://images.pexels.com/photos/7594183/pexels-photo-7594183.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1', 
+                    icon: 'ruletafrancesa-icon.png', 
+                    gameTypeID: gameTypes.find(type => type.name === 'Ruleta').id 
+                },
+                { 
+                    name: 'Blackjack Clásico', 
+                    shortDescription: 'Blackjack Clásico', 
+                    longDescription: 'Blackjack con reglas clásicas', 
+                    url: '/games/blackjack/blackjackclasico', 
+                    picture: 'https://images.pexels.com/photos/3279691/pexels-photo-3279691.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1', 
+                    icon: 'blackjackclasico-icon.png', 
+                    gameTypeID: gameTypes.find(type => type.name === 'Blackjack').id 
+                },
+                { 
+                    name: 'Blackjack Americano', 
+                    shortDescription: 'Blackjack Americano', 
+                    longDescription: 'Blackjack con reglas americanas', 
+                    url: '/games/blackjack/blackjackamericano', picture: 'https://images.pexels.com/photos/6664196/pexels-photo-6664196.jpeg', 
+                    icon: 'blackjackamericano-icon.png', 
+                    gameTypeID: gameTypes.find(type => type.name === 'Blackjack').id 
+                },
+                { 
+                    name: 'Blackjack Europeo', 
+                    shortDescription: 'Blackjack Europeo', 
+                    longDescription: 'Blackjack con reglas europeas', 
+                    url: '/games/blackjack/blackjackeuropeo', picture: 'https://images.pexels.com/photos/18341169/pexels-photo-18341169/free-photo-of-casino-patatas-fritas-chips-tarjetas.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1', 
+                    icon: 'blackjackeuropeo-icon.png', 
+                    gameTypeID: gameTypes.find(type => type.name === 'Blackjack').id 
+                },
+                { 
+                    name: 'Baccarat Clásico', 
+                    shortDescription: 'Baccarat Clásico', 
+                    longDescription: 'Baccarat con reglas clásicas', 
+                    url: '/games/baccarat/baccaratclasico', picture: 'https://images.pexels.com/photos/7594250/pexels-photo-7594250.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1', 
+                    icon: 'baccaratclasico-icon.png', 
+                    gameTypeID: gameTypes.find(type => type.name === 'Baccarat').id 
+                },
+                { 
+                    name: 'Baccarat Americano', 
+                    shortDescription: 'Baccarat Americano', 
+                    longDescription: 'Baccarat con reglas americanas', 
+                    url: '/games/baccarat/baccaratamericano', 
+                    picture: 'https://images.pexels.com/photos/7594268/pexels-photo-7594268.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1', 
+                    icon: 'baccaratamericano-icon.png', 
+                    gameTypeID: gameTypes.find(type => type.name === 'Baccarat').id 
+                },
+                { 
+                    name: 'Baccarat Europeo', 
+                    shortDescription: 'Baccarat Europeo', 
+                    longDescription: 'Baccarat con reglas europeas', 
+                    url: '/games/baccarat/baccarateuropeo', 
+                    picture: 'https://images.pexels.com/photos/7594295/pexels-photo-7594295.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1', 
+                    icon: 'baccarateuropeo-icon.png', 
+                    gameTypeID: gameTypes.find(type => type.name === 'Baccarat').id 
+                },
+            ];
+
+            await db.game.bulkCreate(gamesData);
+        }
+
+        const bannerAddCount = await db.BannerAdd.count();
+        if (bannerAddCount === 0) {
+            await db.BannerAdd.bulkCreate([
+                { title: 'Swiper Add 1', description: 'lorem ipsum',  type: 'swiper', imageUrl: 'https://static.motor.es/fotos-noticias/2020/03/que-coche-es-rayo-mcqueen-202066150-1585635516_1.jpg', iconUrl: '', linkUrl: '/swiper1' },
+                { title: 'Swiper Add 2', description: 'lorem ipsum',  type: 'swiper', imageUrl: 'https://static.motor.es/fotos-noticias/2020/03/que-coche-es-rayo-mcqueen-202066150-1585635516_1.jpg', iconUrl: '', linkUrl: '/swiper2' },
+                { title: 'Swiper Add 3', description: 'lorem ipsum',  type: 'swiper', imageUrl: 'https://static.motor.es/fotos-noticias/2020/03/que-coche-es-rayo-mcqueen-202066150-1585635516_1.jpg', iconUrl: '', linkUrl: '/swiper3' },
+                { title: 'Swiper Add 4', description: 'lorem ipsum',  type: 'swiper', imageUrl: 'https://static.motor.es/fotos-noticias/2020/03/que-coche-es-rayo-mcqueen-202066150-1585635516_1.jpg', iconUrl: '', linkUrl: '/swiper4' },
+                { title: 'Swiper Add 5', description: 'lorem ipsum',  type: 'swiper', imageUrl: 'https://static.motor.es/fotos-noticias/2020/03/que-coche-es-rayo-mcqueen-202066150-1585635516_1.jpg', iconUrl: '', linkUrl: '/swiper5' },
+                { title: 'Card Add 1', description: 'lorem ipsum', type: 'card', imageUrl: 'https://pm1.aminoapps.com/6469/58814b3dd292c92c0d1f5967c572eebf61e586a8_00.jpg', iconUrl: '', linkUrl: '/card1' },
+                { title: 'Card Add 2', description: 'lorem ipsum', type: 'card', imageUrl: 'https://pm1.aminoapps.com/6469/58814b3dd292c92c0d1f5967c572eebf61e586a8_00.jpg', iconUrl: '', linkUrl: '/card2' },
+                { title: 'Card Add 3', description: 'lorem ipsum', type: 'card', imageUrl: 'https://pm1.aminoapps.com/6469/58814b3dd292c92c0d1f5967c572eebf61e586a8_00.jpg', iconUrl: '', linkUrl: '/card3' },
+                { title: 'Card Add 4', description: 'lorem ipsum', type: 'card', imageUrl: 'https://pm1.aminoapps.com/6469/58814b3dd292c92c0d1f5967c572eebf61e586a8_00.jpg', iconUrl: '', linkUrl: '/card4' },
+                { title: 'Card Add 5', description: 'lorem ipsum', type: 'card', imageUrl: 'https://pm1.aminoapps.com/6469/58814b3dd292c92c0d1f5967c572eebf61e586a8_00.jpg', iconUrl: '', linkUrl: '/card5' },
+            ]);
+        }
+
 
         console.log("Default data has been inserted successfully.");
     } catch (error) {

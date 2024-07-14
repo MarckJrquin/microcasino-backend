@@ -133,7 +133,7 @@ const validateProfileUpdate = async (req, res, next) => {
 const checkChangePassword = async (req, res, next) => {
   try {
     const userId = req.userId;
-    const oldPassword = req.body.oldPassword;
+    const password = req.body.password;
 
     const user = await User.findByPk(userId);
 
@@ -141,7 +141,7 @@ const checkChangePassword = async (req, res, next) => {
       return res.status(404).send({ message: "Usuario no encontrado" });
     }
 
-    const isPasswordCorrect = await bcrypt.compare(oldPassword, user.password);
+    const isPasswordCorrect = await bcrypt.compare(password, user.password);
 
     if (!isPasswordCorrect) {
       return res.status(400).send({ message: "La contraseña anterior no es correcta" });
@@ -157,6 +157,8 @@ const checkChangePassword = async (req, res, next) => {
 const validateNewPassword = (req, res, next) => {
   try {
     const { newPassword } = req.body;
+
+    console.log("New password", newPassword);
 
     if (!newPassword) {
       return res.status(400).send({ message: "Ingrese su nueva contraseña" });

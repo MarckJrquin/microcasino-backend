@@ -16,6 +16,14 @@ module.exports = (sequelize, DataTypes) => {
         credits: {
             type: DataTypes.INTEGER,
             allowNull: false
+        },
+        picture: {
+            type: DataTypes.STRING,
+            allowNull: true
+        },
+        icon: {
+            type: DataTypes.STRING,
+            allowNull: true
         }
     }, {
         freezeTableName: true

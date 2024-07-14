@@ -1,8 +1,11 @@
 const express = require('express');
-const userRouter = express.Router({});
+const multer = require('multer');
 
-const { authJwt, verifyUserProfile, verifySignUp } = require("../middlewares");
 const userController = require("../controllers/user.controller");
+const { authJwt, verifyUserProfile, mediaCheck } = require("../middlewares");
+
+const userRouter = express.Router({});
+const upload = multer({ storage: multer.memoryStorage() });
 
 
 userRouter.use(function setCorsHeaders(req, res, next) {
@@ -38,6 +41,26 @@ userRouter.put(
         verifyUserProfile.validateProfileUpdate
     ],
     userController.updateProfile
+);
+
+// Ruta para subir foto de perfil
+userRouter.post(
+    '/profile/upload', 
+    [
+        authJwt.verifyToken,
+        upload.single('profilePicture'), 
+        mediaCheck.imageValidator
+    ],
+    userController.uploadProfilePicture
+);
+
+// Ruta para eliminar foto de perfil
+userRouter.delete(
+    '/profile/delete', 
+    [
+        authJwt.verifyToken
+    ],
+    userController.deleteProfilePicture
 );
 
 userRouter.put(

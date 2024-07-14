@@ -114,8 +114,6 @@ const updateUserBankAccount = async (req, res) => {
         const id = req.body.id || req.params.id;
         const userID = req.body.userId || req.params.userId;
 
-        console.log("as", req.body);
-
         const fieldsToUpdate = filterValidFields(req.body);
 
         const [updated] = await BankAccount.update(fieldsToUpdate, {
@@ -273,29 +271,86 @@ const deleteUserBankAccount = async (req, res) => {
 
 
 /* -- Controlador para obtener el balance de la cuenta, wallet -- */
-
+const getUserCreditsBalance = async (req, res) => {
+    try {
+        const userId = req.params.userId || req.body.userId || req.userId;
+        const userCredit = await UserCredit.findOne({ where: { userID: userId } });
+        if (userCredit) {
+            return res.status(200).send(userCredit);
+        } else {
+            return res.status(404).send({ message: "No se encontro el balance de créditos para el usuario" });
+        }
+    } catch (error) {
+        res.status(500).send({ message: error.message });
+    }
+};
 
 
 /* -- Controlador para obtener el historial de transacciones -- */
+const withdrawCredits = async (req, res) => {
+    try {
+        const userId = req.params.userId || req.body.userId || req.userId;
+        let { credits } = req.body;
+
+        // Convertir credits a número
+        credits = Number(credits);
+
+        if (!credits || credits <= 0) {
+            return res.status(400).send({ message: "La cantidad de créditos debe ser mayor que cero" });
+        }
+
+        const userCredits = await UserCredit.findOne({ where: { userID: userId } });
+
+        if (userCredits && userCredits.credits >= credits) {
+            userCredits.credits -= credits;
+            await userCredits.save();
+
+            const amount = credits * 0.25; // cada crédito vale $0.25
+
+            await CreditTransaction.create({
+                userID: userId,
+                type: 'withdrawal',
+                amount: amount,
+                credits: credits
+            });
+
+            res.status(200).send({ message: "Retiro de créditos exitoso"});
+        } else {
+            res.status(400).send({ message: "No tienes suficientes créditos para realizar el retiro"});
+        }
+    } catch (error) {
+        res.status(500).send({ message: error.message });
+    }
+}
 
 
+/* -- Controlador para obtener el historial de trasacciones -- */
+const getCreditTransactionsHistory = async (req, res) => {
+    try {
+        const userId = req.params.userId || req.body.userId || req.userId;
+        const transactions = await CreditTransaction.findAll({ 
+            where: { userID: userId } ,
+            include: [
+                {
+                    model: Product
+                }
+            ]
+        });
 
-/* -- Controlador para obtener el historial de depósito de dinero -- */
-
-
-
-/* -- Controlador para obtener el historial de retiro de dinero -- */
-
+        res.status(200).send(transactions);
+    } catch (error) {
+        res.status(500).send({ message: error.message });
+    }
+}
 
 
 /* -- Controlador para manejar la creación de la sesión de Stripe -- */
-const createCheckoutSession = async (req, res) => {
+const createCheckoutSessionForProducts = async (req, res) => {
     try {
         const userId = req.body.userId || req.params.userId;
         const productId = req.body.id || req.params.id;
-        const amount = req.body.price || req.params.price;
 
-        if (!userId || !productId || !amount) {
+        if (!userId || !productId) {
             return res.status(400).send({ message: "Faltan campos requeridos en la solicitud de depósito" });
         }
 
@@ -311,7 +366,7 @@ const createCheckoutSession = async (req, res) => {
                         product_data: {
                             name: product.name,
                         },
-                        unit_amount: amount * 100, // Stripe expects amounts in cents
+                        unit_amount: product.price * 100, // Stripe expects amounts in cents
                     },
                     quantity: 1,
                 },
@@ -325,7 +380,7 @@ const createCheckoutSession = async (req, res) => {
                 email: user.email,
                 productId: product.id,
                 productName: product.name,
-                amount: amount,
+                amount: product.price,
             }
         });
 
@@ -336,7 +391,7 @@ const createCheckoutSession = async (req, res) => {
             email: user.email,
             productId: product.id,
             productName: product.name,
-            amount: amount,
+            amount: product.price,
             credits: product.credits,
         };
 
@@ -345,6 +400,71 @@ const createCheckoutSession = async (req, res) => {
         res.status(500).send({ message: error.message });
     }
 };
+
+
+const createCheckoutSessionForCredits = async (req, res) => {
+    try {
+        const userId = req.body.userId || req.params.userId;
+        let amount = req.body.amount || req.params.amount;
+
+        if (!userId || !amount) {
+            return res.status(400).send({ message: "Faltan campos requeridos en la solicitud de depósito" });
+        }
+
+        // Convertir amount a número
+        amount = Number(amount);
+
+        const user = await User.findByPk(userId);
+
+        if (!user) {
+            return res.status(404).send({ message: "Usuario no encontrado" });
+        }
+
+        const credits = Math.floor(amount / 0.25); // Conversión de dinero a créditos
+        const productName = `Conversion to Credits (${credits} credits)`;
+
+        const session = await stripe.checkout.sessions.create({
+            payment_method_types: ['card'],
+            line_items: [
+                {
+                    price_data: {
+                        currency: 'usd',
+                        product_data: {
+                            name: productName,
+                        },
+                        unit_amount: amount * 100, // Stripe expects amounts in cents
+                    },
+                    quantity: 1,
+                },
+            ],
+            mode: 'payment',
+            success_url: `${frontendConfig.URL}/payment/success`,
+            cancel_url: `${frontendConfig.URL}/payment/cancel`,
+            metadata: {
+                userId: user.id,
+                username: user.username,
+                email: user.email,
+                amount,
+                credits,
+            }
+        });
+
+        // Guardar los detalles de la transacción en la sesión
+        req.session.transactionDetails = {
+            userId: user.id,
+            username: user.username,
+            email: user.email,
+            productName: productName,
+            amount,
+            credits,
+        };
+
+        return res.status(201).send({ session });
+    } catch (error) {
+        res.status(500).send({ message: error.message });
+    }
+};
+
 
 
 const webhook = async (req, res) => {
@@ -368,7 +488,6 @@ const webhook = async (req, res) => {
     }
 
     if (event.type === 'checkout.session.completed') {
-
         console.log("Checkout session completed");
 
         const session = event.data.object;
@@ -377,50 +496,77 @@ const webhook = async (req, res) => {
 
         // Obtener metadata
         const userId = session.metadata.userId;
+        const username = session.metadata.username;
+        const email = session.metadata.email;
         const productId = session.metadata.productId;
+        const amount = session.metadata.amount;
+        const productName = session.metadata.productName;
+        let credits = session.metadata.credits;
 
+        credits = Number(credits);
+
+        console.log("session", session);
         console.log("User ID", userId);
         console.log("Product ID", productId);
+        console.log("Amount", amount);
+        console.log("Credits", credits);
 
         try {
-            // Obtener detalles del producto
-            const product = await Product.findByPk(productId);
-
             // Obtener el usuario
             const user = await User.findByPk(userId);
+            if (!user) {
+                console.log(`User not found: userId ${userId}`);
+                return res.status(404).send({ message: "Usuario no encontrado" });
+            }
 
-            console.log("User", user);
-            console.log("Product", product);
-            
+            // Obtener o crear el registro de UserCredit
+            let userCredit = await UserCredit.findOne({ where: { userID: userId } });
+            if (!userCredit) {
+                userCredit = await UserCredit.create({ userID: userId, credits: 0 });
+            }
 
-            if (user && product) {
-                console.log("User and Product found");
-
-                // Actualizar el balance de créditos del usuario
-                const userCredit = await UserCredit.findOne({ where: { userID: userId } });
-
-                if (userCredit) {
-                    console.log("UserCredit found");
-                    userCredit.credits += product.dataValues.credits;
-                    await userCredit.save();
-
-                    // Registrar la transacción
-                    await CreditTransaction.create({
-                        userID: userId,
-                        type: 'deposit',
-                        amount: product.dataValues.price,
-                        credits: product.dataValues.credits,
-                        timestamp: new Date(),
-                        stripeSessionId: session.id,
-                        productID: productId
-                    });
-
-                    console.log("Transaction created");
-                } else {
-                    console.log(`UserCredit not found for user ID ${user.id}`);
+            // Caso 1: Compra de producto
+            if (productId) {
+                // Obtener detalles del producto
+                const product = await Product.findByPk(productId);
+                if (!product) {
+                    console.log(`Product not found: productId ${productId}`);
+                    return res.status(404).send({ message: "Producto no encontrado" });
                 }
+
+                // Actualizar créditos del usuario
+                userCredit.credits += product.dataValues.credits;
+                await userCredit.save();
+
+                // Registrar la transacción
+                await CreditTransaction.create({
+                    userID: userId,
+                    type: 'deposit',
+                    amount: product.dataValues.price,
+                    credits: product.dataValues.credits,
+                    stripeSessionId: session.id,
+                    productID: productId
+                });
+
+                console.log("Transaction for product purchase created");
+
             } else {
-                console.log(`User or Product not found: userId ${userId}, productId ${productId}`);
+                // Caso 2: Conversión de dinero a créditos
+                // Actualizar créditos del usuario
+                userCredit.credits += parseInt(credits);
+                await userCredit.save();
+
+                // Registrar la transacción
+                await CreditTransaction.create({
+                    userID: userId,
+                    type: 'deposit',
+                    amount: amount,
+                    credits: credits,
+                    stripeSessionId: session.id,
+                    productName: productName
+                });
+
+                console.log("Transaction for credits conversion created");
             }
         } catch (error) {
             console.error(`Error processing webhook: ${error.message}`);
@@ -513,7 +659,8 @@ const filterValidFields = (fields) => {
 
 
 module.exports = {
-    createCheckoutSession,
+    createCheckoutSessionForProducts,
+    createCheckoutSessionForCredits,
     webhook,
     getTransactionDetails,
     getBanks,
@@ -530,6 +677,9 @@ module.exports = {
     deleteBank,
     deleteBankAccountType,
     deleteUserBankAccount,
+    getUserCreditsBalance,
+    withdrawCredits,
+    getCreditTransactionsHistory
 };
 
 

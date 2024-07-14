@@ -1,7 +1,7 @@
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const config = require("../config/auth.config");
-const { sendConfirmationEmail } = require("../mail/mailer");
+const { sendConfirmationEmail, sendPasswordResetEmail } = require("../mail/mailer");
 
 const db = require("../models");
 const User = db.user;
@@ -89,7 +89,8 @@ const signup = async (req, res) => {
         const user = await User.create({
             username,
             email,
-            password: bcrypt.hashSync(password, 8),  
+            password: bcrypt.hashSync(password, 8),
+            confirmationExpiresAt: new Date(Date.now() + 2 * 60 * 60 * 1000)  // 2 horas  
         });
   
         if (roles) {
@@ -157,6 +158,29 @@ const signout = async (req, res) => {
         });
     }
 };
+
+
+/* -- Controlador para confirmar el registro de un usuario -- */
+const confirmRegistration = async (req, res) => {
+    try {
+        const token = req.params.token;
+
+        if (!token) {
+            return res.status(400).send({ message: "Token no proporcionado." });
+        }
+        
+        const decoded = jwt.verify(token, config.secret);
+        const user = await User.findByPk(decoded.id);
+        if (!user) {
+            return res.status(404).send({ message: "Usuario no encontrado" });
+        }
+        user.confirmed = true;
+        await user.save();
+        return res.status(200).send({ message: "Usuario confirmado con éxito, ya puedes iniciar sesión en Casino" });
+    } catch (error) {
+        return res.status(500).send({ message: error.message });
+    }
+};
   
   
 /* -- Controlador para recuperar contrasena de un usuario -- */
@@ -184,60 +208,72 @@ const forgotPassword = async (req, res) => {
             message: "Contraseña restablecida con éxito",
         });   
     } catch (error) {
-        return res.status(500).send({
-            message: error.message,
-        });
-    }
-};
-
-
-/* -- Controlador para confirmar el registro de un usuario -- */
-const confirmRegistration = async (req, res) => {
-    try {
-        const token = req.params.token;
-
-        if (!token) {
-            return res.status(400).send({ message: "Token no proporcionado." });
-        }
-        
-        const decoded = jwt.verify(token, config.secret);
-        const user = await User.findByPk(decoded.id);
-        if (!user) {
-            return res.status(404).send({ message: "Usuario no encontrado" });
-        }
-        user.confirmed = true;
-        await user.save();
-        return res.status(200).send({ message: "Usuario confirmado con éxito, ya puedes iniciar sesión en Casino" });
-    } catch (error) {
         return res.status(500).send({ message: error.message });
     }
 };
 
 
-/* -- Controlador verificar y eliminar usuarios que no confirmaron su registro -- */
-const checkUnconfirmedUsers = async (req, res) => {
+/*  -- Controlador para solicitar cambio de contrasena -- */
+const requestPasswordRecovery = async (req, res) => {
     try {
-        const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000); // Fecha hace 2 horas
-        const unconfirmedUsers = await User.findAll({
-            where: {
-                confirmed: false,
-                createdAt: {
-                    [Op.lt]: twoHoursAgo
-                }
-            }
-        });
+        const { email } = req.body;
 
-        // Eliminar los usuarios no confirmados hace más de 2 horas
-        for (const user of unconfirmedUsers) {
-            await user.destroy();
+        console.log(email);
+    
+        const user = await User.findOne({ where: { email } });
+    
+        if (!user) {
+            return res.status(404).send({ message: "Usuario no encontrado" });
+        }
+    
+        const token = jwt.sign({ id: user.id }, config.secret, { expiresIn: config.jwtResetExpiration });
+    
+        // Enviar correo de recuperación de contraseña
+        sendPasswordResetEmail(user.email, token);
+    
+        res.status(200).send({ message: "Correo de recuperación de contraseña enviado con éxito." });
+    } catch (error) {
+        res.status(500).send({ message: error.message });
+    }
+};
+
+
+/*  -- Controlador para restablecer la contraseña -- */
+const resetPassword = async (req, res) => {
+    try {
+        const { token, newPassword } = req.body;
+  
+        if (!token) {
+            return res.status(400).send({ message: "Token no proporcionado." });
         }
 
-        console.log(`${unconfirmedUsers.length} usuarios no confirmados eliminados.`);
+        let decoded;
+        
+        try {
+            decoded = jwt.verify(token, config.secret);
+        } catch (error) {
+            if (error.name === 'TokenExpiredError') {
+                return res.status(401).send({ message: "Token expirado. Por favor, solicita un nuevo enlace de recuperación de contraseña." });
+            }
+            return res.status(401).send({ message: "Token inválido." });
+        }
+      
+        const user = await User.findByPk(decoded.id);
+      
+        if (!user) {
+            return res.status(404).send({ message: "Usuario no encontrado" });
+        }
+      
+        user.password = bcrypt.hashSync(newPassword, 8);
+        await user.save();
+      
+        res.status(200).send({ message: "Contraseña restablecida con éxito." });
     } catch (error) {
-        console.error("Error al verificar y eliminar usuarios no confirmados:", error);
+        res.status(500).send({ message: error.message });
     }
 };
   
+
 
 module.exports = {
     signin,
@@ -245,5 +281,6 @@ module.exports = {
     signout,
     forgotPassword,
     confirmRegistration,
-    checkUnconfirmedUsers
+    requestPasswordRecovery,
+    resetPassword
 };
