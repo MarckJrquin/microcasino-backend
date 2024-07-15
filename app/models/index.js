@@ -303,7 +303,7 @@ async function syncAndSeed() {
                     name: '4 Slots', 
                     shortDescription: 'Tragamonedas de 4 slots', 
                     longDescription: 'Tragamonedas con 4 slots', 
-                    url: '/games/slots/4slots', 
+                    url: '', 
                     picture: 'https://betravingknows.com/wp-content/uploads/2019/07/slot-machines-gaming-floor_m.jpg', 
                     icon: '4slots-icon.png', 
                     gameTypeID: gameTypes.find(type => type.name === 'Tragamonedas').id 
@@ -312,7 +312,7 @@ async function syncAndSeed() {
                     name: '5 Slots', 
                     shortDescription: 'Tragamonedas de 5 slots', 
                     longDescription: 'Tragamonedas con 5 slots', 
-                    url: '/games/slots/5slots', 
+                    url: '', 
                     picture: 'https://www.talkingstickresort.com/media/8337/web-spinsider.png', 
                     icon: '5slots-icon.png', 
                     gameTypeID: gameTypes.find(type => type.name === 'Tragamonedas').id 
@@ -321,7 +321,7 @@ async function syncAndSeed() {
                     name: 'Ruleta Europea', 
                     shortDescription: 'Ruleta Europea', 
                     longDescription: 'Ruleta con reglas europeas', 
-                    url: '/games/ruleta/ruletaeuropea', 
+                    url: '', 
                     picture: 'https://images.pexels.com/photos/6664246/pexels-photo-6664246.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1', 
                     icon: 'ruletaeuropea-icon.png', 
                     gameTypeID: gameTypes.find(type => type.name === 'Ruleta').id 
@@ -330,7 +330,7 @@ async function syncAndSeed() {
                     name: 'Ruleta Americana', 
                     shortDescription: 'Ruleta Americana', 
                     longDescription: 'Ruleta con reglas americanas', 
-                    url: '/games/ruleta/ruletaamericana', 
+                    url: '', 
                     picture: 'https://images.pexels.com/photos/4677402/pexels-photo-4677402.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1', 
                     icon: 'ruletaamericana-icon.png', 
                     gameTypeID: gameTypes.find(type => type.name === 'Ruleta').id 
@@ -339,7 +339,7 @@ async function syncAndSeed() {
                     name: 'Ruleta Francesa', 
                     shortDescription: 'Ruleta Francesa', 
                     longDescription: 'Ruleta con reglas francesas', 
-                    url: '/games/ruleta/ruletafrancesa', 
+                    url: '', 
                     picture: 'https://images.pexels.com/photos/7594183/pexels-photo-7594183.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1', 
                     icon: 'ruletafrancesa-icon.png', 
                     gameTypeID: gameTypes.find(type => type.name === 'Ruleta').id 
@@ -348,7 +348,7 @@ async function syncAndSeed() {
                     name: 'Blackjack Clásico', 
                     shortDescription: 'Blackjack Clásico', 
                     longDescription: 'Blackjack con reglas clásicas', 
-                    url: '/games/blackjack/blackjackclasico', 
+                    url: '', 
                     picture: 'https://images.pexels.com/photos/3279691/pexels-photo-3279691.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1', 
                     icon: 'blackjackclasico-icon.png', 
                     gameTypeID: gameTypes.find(type => type.name === 'Blackjack').id 
@@ -357,7 +357,8 @@ async function syncAndSeed() {
                     name: 'Blackjack Americano', 
                     shortDescription: 'Blackjack Americano', 
                     longDescription: 'Blackjack con reglas americanas', 
-                    url: '/games/blackjack/blackjackamericano', picture: 'https://images.pexels.com/photos/6664196/pexels-photo-6664196.jpeg', 
+                    url: '', 
+                    picture: 'https://images.pexels.com/photos/6664196/pexels-photo-6664196.jpeg', 
                     icon: 'blackjackamericano-icon.png', 
                     gameTypeID: gameTypes.find(type => type.name === 'Blackjack').id 
                 },
@@ -365,7 +366,8 @@ async function syncAndSeed() {
                     name: 'Blackjack Europeo', 
                     shortDescription: 'Blackjack Europeo', 
                     longDescription: 'Blackjack con reglas europeas', 
-                    url: '/games/blackjack/blackjackeuropeo', picture: 'https://images.pexels.com/photos/18341169/pexels-photo-18341169/free-photo-of-casino-patatas-fritas-chips-tarjetas.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1', 
+                    url: '', 
+                    picture: 'https://images.pexels.com/photos/18341169/pexels-photo-18341169/free-photo-of-casino-patatas-fritas-chips-tarjetas.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1', 
                     icon: 'blackjackeuropeo-icon.png', 
                     gameTypeID: gameTypes.find(type => type.name === 'Blackjack').id 
                 },
@@ -373,7 +375,8 @@ async function syncAndSeed() {
                     name: 'Baccarat Clásico', 
                     shortDescription: 'Baccarat Clásico', 
                     longDescription: 'Baccarat con reglas clásicas', 
-                    url: '/games/baccarat/baccaratclasico', picture: 'https://images.pexels.com/photos/7594250/pexels-photo-7594250.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1', 
+                    url: '', 
+                    picture: 'https://images.pexels.com/photos/7594250/pexels-photo-7594250.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1', 
                     icon: 'baccaratclasico-icon.png', 
                     gameTypeID: gameTypes.find(type => type.name === 'Baccarat').id 
                 },
@@ -381,7 +384,7 @@ async function syncAndSeed() {
                     name: 'Baccarat Americano', 
                     shortDescription: 'Baccarat Americano', 
                     longDescription: 'Baccarat con reglas americanas', 
-                    url: '/games/baccarat/baccaratamericano', 
+                    url: '', 
                     picture: 'https://images.pexels.com/photos/7594268/pexels-photo-7594268.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1', 
                     icon: 'baccaratamericano-icon.png', 
                     gameTypeID: gameTypes.find(type => type.name === 'Baccarat').id 
@@ -390,7 +393,7 @@ async function syncAndSeed() {
                     name: 'Baccarat Europeo', 
                     shortDescription: 'Baccarat Europeo', 
                     longDescription: 'Baccarat con reglas europeas', 
-                    url: '/games/baccarat/baccarateuropeo', 
+                    url: '', 
                     picture: 'https://images.pexels.com/photos/7594295/pexels-photo-7594295.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1', 
                     icon: 'baccarateuropeo-icon.png', 
                     gameTypeID: gameTypes.find(type => type.name === 'Baccarat').id 

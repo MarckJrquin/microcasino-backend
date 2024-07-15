@@ -226,5 +226,29 @@ billingRouter.get(
     billingController.getCreditTransactionsHistory
 );
 
+billingRouter.get(
+    '/user/:userId/games/',
+    [
+        authJwt.verifyToken
+    ],
+    billingController.getGameTransactionsHistory
+);
+
+billingRouter.post(
+    '/user/record-win',
+    [
+        authJwt.verifyToken,
+    ],
+    billingController.recordWin
+);
+
+billingRouter.post(
+    '/user/record-bet',
+    [
+        authJwt.verifyToken,
+    ],
+    billingController.recordBet
+);
+
 
 module.exports = billingRouter

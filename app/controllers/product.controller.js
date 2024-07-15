@@ -31,6 +31,11 @@ const getAllProducts = async (req, res) => {
 const createProduct = async (req, res) => {
     try {
         const { name, price, description } = req.body;
+
+        if (!name || !price || !description) {
+            return res.status(400).send({message: "Please provide all the required fields"});
+        }
+
         const product = await Product.create({ name, price, description });
         return res.status(201).send(product);
     } catch (error) {

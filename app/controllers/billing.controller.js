@@ -7,6 +7,7 @@ const frontendConfig = require('../config/frontend.config');
 
 const db = require("../models");
 const billingRouter = require('../routes/billing.routes');
+const { Op } = require('sequelize'); 
 const User = db.user;
 const Person = db.person;
 const Bank = db.bank;
@@ -15,6 +16,7 @@ const BankAccountType = db.bankAccountType;
 const UserCredit = db.userCredit;
 const CreditTransaction = db.creditTransaction;
 const Product = db.product;
+
 
 const stripe = new Stripe(stripeConfig.STRIPE_SECRET_KEY);
 
@@ -329,7 +331,10 @@ const getCreditTransactionsHistory = async (req, res) => {
     try {
         const userId = req.params.userId || req.body.userId || req.userId;
         const transactions = await CreditTransaction.findAll({ 
-            where: { userID: userId } ,
+            where: { 
+                userID: userId, 
+                type: { [Op.or]: ['deposit', 'withdrawal'] } 
+            },
             include: [
                 {
                     model: Product
@@ -342,6 +347,30 @@ const getCreditTransactionsHistory = async (req, res) => {
         res.status(500).send({ message: error.message });
     }
 }
+
+
+/* -- Controlador para obtener el historial de Apuestas / Juegos -- */
+const getGameTransactionsHistory = async (req, res) => {
+    try {
+        const userId = req.params.userId || req.body.userId || req.userId;
+        const transactions = await CreditTransaction.findAll({ 
+            where: { 
+                userID: userId, 
+                type: { [Op.or]: ['win', 'bet'] } 
+            },
+            include: [
+                {
+                    model: Product
+                }
+            ]
+        });
+
+        res.status(200).send(transactions);
+    } catch (error) {
+        res.status(500).send({ message: error.message });
+    }
+}
+
 
 
 /* -- Controlador para manejar la creación de la sesión de Stripe -- */
@@ -658,6 +687,63 @@ const filterValidFields = (fields) => {
 };
 
 
+const recordWin = async (req, res) => {
+    const userId = req.userId;
+    const { credits } = req.body;
+
+    try {
+        // Update user's credit balance
+        const userCredit = await UserCredit.findOne({ where: { userID: userId } });
+        userCredit.credits += credits;
+        await userCredit.save();
+
+        // Log the transaction
+        await CreditTransaction.create({
+            userID: userId,
+            type: "win",
+            credits: userCredit.credits
+        });
+
+        return res.status(200).json({ message: "Has Ganado! los créditos han sido registrados exitosamente", credits: userCredit.credits });
+    } catch (error) {
+        return res.status(500).json({ message: "Error al actualizar los créditos", error: error.message });
+    }
+};
+
+const recordBet = async (req, res) => {
+    const userId = req.userId;
+    const { credits } = req.body;
+
+    try {
+
+        if(credits <= 0 || !credits) {
+            return res.status(400).json({ message: "Ingrese la cantidad de créditos a apostar, mayor que 0" });
+        }
+
+        // Update user's credit balance
+        const userCredit = await UserCredit.findOne({ where: { userID: userId } });
+        if (userCredit.credits < credits) {
+            return res.status(400).json({ message: "No tienes suficientes créditos para realizar la apuesta" });
+        }
+
+        userCredit.credits -= credits;
+        await userCredit.save();
+
+        // Log the transaction
+        await CreditTransaction.create({
+            userID: userId,
+            amount: 0,
+            type: "bet", 
+            credits: credits
+        });
+
+        return res.status(200).json({ message: "Apuesta Realizada con Éxito", credits: userCredit.credits });
+    } catch (error) {
+        return res.status(500).json({ message: "Error al actualizar los créditos", error: error.message });
+    }
+};
+
+
 module.exports = {
     createCheckoutSessionForProducts,
     createCheckoutSessionForCredits,
@@ -679,7 +765,10 @@ module.exports = {
     deleteUserBankAccount,
     getUserCreditsBalance,
     withdrawCredits,
-    getCreditTransactionsHistory
+    getCreditTransactionsHistory,
+    getGameTransactionsHistory,
+    recordWin,
+    recordBet
 };
 
 

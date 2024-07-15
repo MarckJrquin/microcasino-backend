@@ -5,37 +5,32 @@ const { authJwt, bannerAddMiddleware } = require("../middlewares");
 const bannerAddController = require("../controllers/bannerAdd.controller");
 
 bannerAddRouter.get(
-    '/bannerAdd/:id', 
-    [authJwt.verifyToken], 
+    '/get/:id', 
     bannerAddController.getBannerAdd
 );
 
 bannerAddRouter.get(
-    '/bannerAdd', 
-    [authJwt.verifyToken], 
+    '/all', 
     bannerAddController.getAllBannerAdds
 );
 
 bannerAddRouter.get(
-    '/bannerAdd/type/:type', 
-    [authJwt.verifyToken], 
+    '/type/:type', 
     bannerAddController.getBannerAddsByType
 );
 
 bannerAddRouter.get(
-    '/bannerAdd/active', 
-    [authJwt.verifyToken], 
+    '/list/active', 
     bannerAddController.getActiveBannerAdds
 );
 
 bannerAddRouter.get(
-    '/bannerAdd/inactive', 
-    [authJwt.verifyToken], 
+    '/list/inactive', 
     bannerAddController.getInactiveBannerAdds
 );
 
 bannerAddRouter.post(
-    '/bannerAdd', 
+    '/create', 
     [
         authJwt.verifyToken, 
         authJwt.isAdmin, 
@@ -45,7 +40,7 @@ bannerAddRouter.post(
 );
 
 bannerAddRouter.put(
-    '/bannerAdd/:id', 
+    '/update/:id', 
     [
         authJwt.verifyToken, 
         authJwt.isAdmin, 
@@ -55,7 +50,7 @@ bannerAddRouter.put(
 );
 
 bannerAddRouter.delete(
-    '/bannerAdd/:id', 
+    '/delete/:id', 
     [
         authJwt.verifyToken, 
         authJwt.isAdmin, 

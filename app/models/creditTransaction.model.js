@@ -11,7 +11,7 @@ module.exports = (sequelize, DataTypes) => {
         },
         amount: {
             type: DataTypes.DECIMAL(10, 2),
-            allowNull: false
+            allowNull: true
         },
         credits: {
             type: DataTypes.INTEGER,

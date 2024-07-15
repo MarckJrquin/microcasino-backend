@@ -13,6 +13,7 @@ const addressRoutes = require("./app/routes/address.routes");
 const productRoutes = require("./app/routes/product.routes");
 const gameRoutes = require("./app/routes/game.routes");
 const helpCenterRoutes = require("./app/routes/helpCenter.routes");
+const bannerAddRoutes = require("./app/routes/bannerAdd.routes");   
 
 dotenv.config();
 
@@ -61,6 +62,7 @@ app.use('/api/v1/billing', billingRoutes);
 app.use('/api/v1/products', productRoutes);
 app.use('/api/v1/games', gameRoutes);
 app.use('/api/v1/help-center', helpCenterRoutes);
+app.use('/api/v1/banner-add', bannerAddRoutes);
 
 
 /* -- Se configura el puerto y escucha las solicitudes entrantes -- */

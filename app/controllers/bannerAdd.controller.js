@@ -113,6 +113,10 @@ const createBannerAdd = async (req, res) => {
             isActive: req.body.isActive
         };
 
+        if(!banner.title || !banner.type) {
+            return res.status(400).send({ message: "Title and type are required" });
+        }
+
         const newBanner = await Banner.create(banner);
 
         res.send(newBanner);
